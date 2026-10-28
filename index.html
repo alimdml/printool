@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پرینتول | سیستم جامع کافینت و پرینت (نسخه ۲.۶)</title>
+
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="پرینتول">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+
+<style>
+  /* ============================================================
+     فونت آفلاین
+     ============================================================ */
+  @font-face {
+    font-family: 'VazirmatnLocal';
+    src: url('font.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1e40af;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; font-family: 'Vazirmatn', 'VazirmatnLocal', Tahoma, sans-serif; }
+  body {
+    background: var(--bg); margin: 0; padding: 20px; color: var(--text);
+    font-weight: 400; padding-bottom: 60px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .container { max-width: 1100px; margin: auto; }
+  
+  /* ===== PWA Install Banner ===== */
+  #installBanner {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    color: #fff; padding: 15px 20px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+    z-index: 9999;
+    align-items: center; justify-content: space-between;
+    gap: 15px; flex-wrap: wrap;
+    border-top: 3px solid #fbbf24;
+  }
+  #installBanner.show { display: flex; animation: slideUp 0.4s ease-out; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  #installBanner .banner-text { flex: 1; min-width: 200px; }
+  #installBanner .banner-text strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  #installBanner .banner-text span { font-size: 12px; opacity: 0.9; }
+  #installBanner .banner-buttons { display: flex; gap: 8px; }
+  #installBanner button {
+    padding: 10px 20px; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 700; font-family: inherit;
+    cursor: pointer; transition: all 0.15s;
+  }
+  #installBtn { background: #fbbf24; color: #78350f; }
+  #installBtn:hover { background: #f59e0b; transform: scale(1.05); }
+  #dismissBtn { background: rgba(255,255,255,0.2); color: #fff; }
+  #dismissBtn:hover { background: rgba(255,255,255,0.3); }
+
+  /* ===== Toast & Custom Confirm Modal ===== */
+  #toastBox {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: #1e293b; color: #fff; padding: 12px 22px; border-radius: 12px;
+    font-size: 14px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    z-index: 10000; opacity: 0; pointer-events: none; transition: all 0.25s ease;
+    border-right: 4px solid #fbbf24; max-width: 90vw; text-align: center;
+  }
+  #toastBox.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  #confirmModal {
+    display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.55);
+    z-index: 10001; align-items: center; justify-content: center; padding: 16px;
+    backdrop-filter: blur(2px);
+  }
+  #confirmModal.show { display: flex; }
+  .modal-card {
+    background: #fff; border-radius: 16px; max-width: 400px; width: 100%;
+    padding: 22px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center;
+  }
+  .modal-card p { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 18px; line-height: 1.7; }
+  .modal-actions { display: flex; gap: 10px; justify-content: center; }
+  .modal-actions button {
+    flex: 1; padding: 10px 16px; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  #confirmYesBtn { background: var(--danger); color: #fff; }
+  #confirmNoBtn { background: #e2e8f0; color: var(--text); }
+  
+  /* نوار ناوبری */
+  .main-nav {
+    display: flex; gap: 10px; margin-bottom: 20px;
+    background: var(--card); padding: 10px; border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); flex-wrap: wrap;
+  }
+  .nav-btn {
+    flex: 1; min-width: 150px; padding: 14px; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 800; font-family: inherit;
+    cursor: pointer; background: transparent; color: var(--muted); transition: all 0.2s;
+  }
+  .nav-btn.active { background: var(--primary); color: #fff; box-shadow: 0 4px 10px rgba(37,99,235,0.3); }
+  .nav-btn:not(.active):hover { background: #f1f5f9; color: var(--text); }
+
+  /* مدیریت بخشها */
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  h1 { text-align: center; color: var(--text); margin: 0 0 20px; font-weight: 800; font-size: 24px; }
+  h2 { color: var(--text); font-weight: 700; font-size: 16px; margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px; }
+  .panel { background: var(--card); padding: 20px; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 18px; }
+
+  /* آکاردئون */
+  details.accordion {
+    background: var(--card); border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 18px; overflow: hidden;
+  }
+  details.accordion summary {
+    padding: 18px 20px; font-weight: 700; font-size: 16px; cursor: pointer;
+    list-style: none; display: flex; justify-content: space-between; align-items: center;
+    background: var(--card); transition: background 0.2s;
+  }
+  details.accordion summary::-webkit-details-marker { display: none; }
+  details.accordion summary:hover { background: #f8fafc; }
+  details.accordion summary::after { content: '▼'; font-size: 12px; color: var(--muted); transition: transform 0.2s; }
+  details.accordion[open] summary::after { transform: rotate(180deg); }
+  details.accordion .accordion-content { padding: 0 20px 20px 20px; border-top: 1px solid var(--border); }
+
+  /* فرمها */
+  .price-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+  .price-row > div { flex: 1 1 160px; }
+  .price-row label, .form-row label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  .price-row input, .form-row input, input[type="file"] {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-family: inherit; transition: border-color 0.15s;
+  }
+  .price-row input:focus, .form-row input:focus { outline: none; border-color: var(--primary); }
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .form-row > div { flex: 1; }
+
+  /* لوگو */
+  .logo-upload-box { display: flex; align-items: center; gap: 15px; margin-top: 10px; }
+  .logo-preview {
+    width: 70px; height: 70px; border: 2px dashed var(--border); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; background: #f8fafc;
+    overflow: hidden; font-size: 11px; color: var(--muted);
+  }
+  .logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .custom-file-upload {
+    display: inline-block; padding: 8px 16px; cursor: pointer; background: #e2e8f0;
+    border-radius: 8px; font-weight: 600; font-size: 13px; color: var(--text); transition: background 0.15s;
+  }
+  .custom-file-upload:hover { background: #cbd5e1; }
+  #logoInput { display: none; }
+
+  /* چیدمان دو ستونه */
+  .top-grid-layout {
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; margin-bottom: 18px;
+  }
+  @media (max-width: 850px) { .top-grid-layout { grid-template-columns: 1fr; } }
+
+  /* گرید سکشنها */
+  .paper-sections-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  @media (max-width: 600px) {
+    .paper-sections-grid { grid-template-columns: 1fr; }
+  }
+
+  .paper-section {
+    background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
+    padding: 15px; display: flex; flex-direction: column;
+  }
+  .paper-section h3 {
+    font-size: 15px; font-weight: 800; color: var(--text);
+    margin: 0 0 12px 0; padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 8px;
+  }
+  .paper-section h3 .badge {
+    background: var(--primary); color: #fff; font-size: 11px;
+    padding: 2px 8px; border-radius: 6px;
+  }
+  .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+  .product-card {
+    background: #fff; border: 2px solid var(--border); border-radius: 12px;
+    padding: 12px 8px; text-align: center; cursor: pointer;
+    transition: all 0.18s ease; user-select: none; position: relative;
+  }
+  .product-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 8px 16px rgba(37,99,235,0.15); }
+  .product-card:active { transform: translateY(-1px) scale(0.98); }
+  .product-card svg, .product-card .custom-icon { width: 40px; height: 50px; margin-bottom: 6px; display: block; margin-inline: auto; object-fit: contain; }
+  .product-card .title { font-weight: 800; font-size: 14px; color: var(--text); }
+  .product-card .subtitle { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .product-card .price-tag {
+    margin-top: 6px; font-size: 12px; font-weight: 700; color: var(--primary);
+    background: #eff6ff; padding: 2px 6px; border-radius: 6px; display: inline-block;
+  }
+  .product-card .add-hint {
+    position: absolute; top: 6px; left: 8px; background: var(--success); color: #fff;
+    font-size: 10px; width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s; font-weight: 700;
+  }
+  .product-card:hover .add-hint { opacity: 1; }
+
+  .product-card.color-card { border-color: #fca5a5; }
+  .product-card.color-card:hover { border-color: #dc2626; box-shadow: 0 8px 16px rgba(220,38,38,0.15); }
+  .product-card.color-card .price-tag { background: #fef2f2; color: #dc2626; }
+
+  .color-section-wrapper {
+    grid-column: 1 / -1;
+    margin-top: 5px;
+  }
+  .color-section-wrapper .paper-section {
+    background: #fef2f2; border-color: #fecaca;
+  }
+  .color-section-wrapper .paper-section h3 { border-bottom-color: #fca5a5; }
+
+  /* سبد فاکتور */
+  .cart-item {
+    display: flex; align-items: center; gap: 10px; background: #f8fafc;
+    padding: 8px 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--border);
+  }
+  .cart-item .thumb svg, .cart-item .thumb img { width: 26px; height: 34px; display: block; object-fit: contain; }
+  .cart-item .info { flex: 1; }
+  .cart-item .info .name { font-weight: 700; font-size: 13px; }
+  .cart-item .info .unit { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .qty-control {
+    display: flex; align-items: center; background: #fff;
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  .qty-control button {
+    width: 26px; height: 26px; border: none; background: #fff;
+    font-size: 14px; font-weight: 700; color: var(--primary); cursor: pointer; transition: background 0.15s;
+  }
+  .qty-control button:hover { background: #eff6ff; }
+  .qty-control .qty {
+    width: 36px; text-align: center; font-weight: 700; font-size: 13px;
+    border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding: 2px 0;
+  }
+  .cart-item .line-total { min-width: 70px; text-align: left; font-weight: 700; font-size: 12px; color: var(--text); }
+  .btn-trash { background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 20px; padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .btn-trash:hover { background: #fee2e2; transform: scale(1.1); }
+  .empty-cart { text-align: center; color: var(--muted); font-size: 12px; padding: 20px 10px; }
+
+  .total-box {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff; padding: 14px 18px; border-radius: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 800; font-size: 15px; margin-top: 10px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+  }
+  .total-box .amount { font-size: 20px; }
+
+  .buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  button.btn {
+    padding: 12px 24px; border: none; border-radius: 10px; cursor: pointer;
+    font-size: 15px; font-weight: 700; font-family: inherit; transition: all 0.15s;
+  }
+  button.btn:hover { transform: translateY(-1px); }
+  .btn-print { background: var(--primary); color: #fff; box-shadow: 0 4px 10px rgba(37,99,235,0.3); }
+  .btn-print:hover { background: var(--primary-dark); }
+  .btn-next { background: var(--success); color: #fff; box-shadow: 0 4px 10px rgba(22,163,74,0.3); }
+  .btn-next:hover { background: #15803d; }
+  .btn-clear { background: #e2e8f0; color: var(--text); }
+  .btn-backup { background: #9333ea; color: #fff; margin-top: 10px; width: 100%; }
+  .btn-restore { background: #0891b2; color: #fff; margin-top: 10px; width: 100%; }
+
+  .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+  @media (max-width: 700px) { .dashboard-grid { grid-template-columns: 1fr; } }
+  .stat-box {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: center;
+  }
+  .stat-box .label { font-size: 14px; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
+  .stat-box .value { font-size: 28px; font-weight: 800; color: var(--primary); }
+  .stat-box.sales .value { color: var(--success); }
+
+  .chart-container {
+    display: flex; align-items: center; justify-content: center; gap: 30px;
+    background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; flex-wrap: wrap;
+  }
+  .pie-chart {
+    width: 140px; height: 140px; border-radius: 50%;
+    background: conic-gradient(
+      #2563eb 0% var(--pA4, 0%),
+      #16a34a var(--pA4, 0%) var(--pA5, 0%),
+      #d97706 var(--pA5, 0%) 100%
+    );
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative;
+  }
+  .pie-chart::after {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); width: 60px; height: 60px;
+    background: #fff; border-radius: 50%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .chart-legend { display: flex; flex-direction: column; gap: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .legend-color { width: 14px; height: 14px; border-radius: 4px; }
+  .legend-color.a4 { background: #2563eb; }
+  .legend-color.a5 { background: #16a34a; }
+  .legend-color.a3 { background: #d97706; }
+
+  .links-dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+  @media (max-width: 900px) { .links-dashboard { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .links-dashboard { grid-template-columns: 1fr; } }
+  .category-box {
+    background: #fff; border-radius: 14px; padding: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 2px solid; display: flex; flex-direction: column;
+  }
+  .category-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;
+  }
+  .category-header img { width: 28px; height: 28px; object-fit: contain; }
+  .category-header h3 { font-size: 15px; color: var(--text); margin: 0; font-weight: 800; }
+  .links-grid-inner { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  @media (max-width: 500px) { .links-grid-inner { grid-template-columns: repeat(2, 1fr); } }
+  .link-item {
+    display: block; padding: 8px 6px; text-decoration: none;
+    font-size: 11px; font-weight: 600; color: var(--text);
+    background: #f8fafc; border-radius: 8px; transition: all 0.15s;
+    text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .link-item:hover { background: #e2e8f0; transform: translateY(-2px); }
+
+  /* راهنمای گیت‌هاب */
+  .guide-step {
+    background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; margin-bottom: 12px; border-right: 4px solid var(--primary);
+  }
+  .guide-step h3 { margin: 0 0 8px 0; font-size: 15px; color: var(--primary-dark); }
+  .guide-step p { margin: 0; font-size: 13px; line-height: 1.8; color: var(--text); }
+  .code-pill {
+    display: inline-block; background: #e2e8f0; padding: 2px 8px; border-radius: 6px;
+    font-family: monospace; font-size: 12px; direction: ltr;
+  }
+
+  .footer {
+    text-align: center; padding: 20px; margin-top: 30px;
+    color: var(--muted); font-size: 13px; font-weight: 600;
+    border-top: 1px solid var(--border);
+  }
+  .footer span { color: var(--primary); font-weight: 800; }
+
+  #invoice { display: none; }
+  #invoice.print-ready { display: block; background: #fff; padding: 40px; border-radius: 12px; margin-top: 20px; border: 1px solid var(--border); }
+  .invoice-header { display: flex; align-items: center; gap: 20px; border-bottom: 2px solid var(--text); padding-bottom: 15px; margin-bottom: 15px; }
+  .invoice-header .logo-img { max-width: 90px; max-height: 90px; object-fit: contain; }
+  .invoice-header .store-info h4 { margin: 0 0 5px 0; font-size: 18px; font-weight: 800; }
+  .invoice-header .store-info p { margin: 0; font-size: 12px; color: var(--muted); }
+  #invoice h3 { text-align: center; font-weight: 800; margin-bottom: 20px; margin-top: 0; }
+  .invoice-meta { font-size: 13px; line-height: 1.9; margin: 15px 0; display: flex; justify-content: space-between; flex-wrap: wrap; }
+  .invoice-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+  .invoice-table th, .invoice-table td { border: 1px solid #cbd5e1; padding: 8px; text-align: center; }
+  .invoice-table th { background: #f1f5f9; font-weight: 700; }
+  .invoice-total { margin-top: 18px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 16px; font-weight: 800; text-align: left; }
+  .invoice-footer { margin-top: 30px; text-align: center; font-size: 12px; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 15px; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    body * { visibility: hidden; }
+    #invoice, #invoice * { visibility: visible; }
+    #invoice { position: absolute; top: 0; left: 0; width: 100%; border: none; }
+    #invoice.print-ready { padding: 20px; }
+  }
+
+  .switch {
+    position: relative; display: inline-block; width: 50px; height: 26px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1; transition: .4s; border-radius: 26px;
+  }
+  .slider:before {
+    position: absolute; content: ""; height: 20px; width: 20px;
+    left: 3px; bottom: 3px; background-color: white; transition: .4s;
+    border-radius: 50%;
+  }
+  input:checked + .slider { background-color: var(--danger); }
+  input:checked + .slider:before { transform: translateX(24px); }
+</style>
+</head>
+<body>
+
+<!-- Toast & Custom Confirm Modal -->
+<div id="toastBox" role="status" aria-live="polite"></div>
+<div id="confirmModal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <p id="confirmMessage">آیا مطمئن هستید؟</p>
+    <div class="modal-actions">
+      <button id="confirmYesBtn" type="button">بله، انجام شود</button>
+      <button id="confirmNoBtn" type="button">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<!-- PWA Install Banner -->
+<div id="installBanner">
+  <div class="banner-text">
+    <strong>📲 نصب پرینتول روی دستگاه</strong>
+    <span>برای دسترسی سریع‌تر و آفلاین، برنامه را به صفحه اصلی اضافه کنید.</span>
+  </div>
+  <div class="banner-buttons">
+    <button id="installBtn" type="button">نصب برنامه</button>
+    <button id="dismissBtn" type="button">بعداً</button>
+  </div>
+</div>
+
+<div class="container">
+  
+  <div class="main-nav">
+    <button class="nav-btn active" type="button" onclick="switchTab('print', this)">🖨️ برنامه اصلی (پرینت)</button>
+    <button class="nav-btn" type="button" onclick="switchTab('links', this)">🌐 سایت‌های مورد نیاز</button>
+    <button class="nav-btn" type="button" onclick="switchTab('github', this)">🚀 راهنمای نصب در گیت‌هاب</button>
+  </div>
+
+  <div id="section-print" class="section active">
+    <h1>پرینتول | 🖨️</h1>
+
+    <div class="top-grid-layout">
+      <div class="panel">
+        <h2>📄 برای افزودن، روی سرویس مورد نظر کلیک کن</h2>
+        
+        <div class="paper-sections-grid">
+          <div class="paper-section">
+            <h3><span class="badge" style="background:#2563eb;">A4</span> کاغذ A4</h3>
+            <div class="products-grid" id="grid-a4"></div>
+          </div>
+
+          <div class="paper-section">
+            <h3><span class="badge" style="background:#16a34a;">A5</span> کاغذ A5</h3>
+            <div class="products-grid" id="grid-a5"></div>
+          </div>
+
+          <div class="paper-section">
+            <h3><span class="badge" style="background:#d97706;">A3</span> کاغذ A3</h3>
+            <div class="products-grid" id="grid-a3"></div>
+          </div>
+
+          <div class="paper-section">
+            <h3><span class="badge" style="background:#9333ea;">خدمات</span> خدمات دیگر</h3>
+            <div class="products-grid" id="grid-services"></div>
+          </div>
+
+          <div class="color-section-wrapper" id="colorSection" style="display:none;">
+            <div class="paper-section">
+              <h3><span class="badge" style="background:#dc2626;">رنگی</span> پرینت رنگی</h3>
+              <div class="products-grid" id="grid-color"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="panel">
+        <h2>🧾 اقلام فاکتور</h2>
+        <div id="cart" style="min-height: 200px;"></div>
+        <div class="total-box">
+          <span>جمع کل</span>
+          <span class="amount" id="totalAmount">۰ تومان</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>👤 اطلاعات مشتری</h2>
+      <div class="form-row">
+        <div><input type="text" id="customerName" placeholder="نام مشتری"></div>
+        <div><input type="text" id="customerPhone" placeholder="شماره تماس مشتری"></div>
+      </div>
+    </div>
+
+    <div class="buttons" style="margin-bottom: 30px;">
+      <button class="btn btn-next" type="button" onclick="registerAndNext()">⏭️ ثبت و مشتری بعدی</button>
+      <button class="btn btn-print" type="button" onclick="showInvoice()">🧾 صدور فاکتور و چاپ</button>
+      <button class="btn btn-clear" type="button" onclick="clearAll()">🗑️ پاک کردن</button>
+    </div>
+
+    <details class="accordion">
+      <summary>📊 داشبورد آماری (کاغذ و درآمد)</summary>
+      <div class="accordion-content">
+        <div class="dashboard-grid">
+          <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div class="stat-box">
+              <div class="label">مجموع کاغذهای مصرفی</div>
+              <div class="value" id="statTotalPaper">۰</div>
+            </div>
+            <div class="stat-box sales">
+              <div class="label">درآمد از فروش (تومان)</div>
+              <div class="value" id="statTotalRevenue">۰</div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div class="pie-chart" id="paperChart" style="--pA4: 0%; --pA5: 0%;"></div>
+            <div class="chart-legend">
+              <div class="legend-item"><div class="legend-color a4"></div> A4: <span id="legendA4">۰</span></div>
+              <div class="legend-item"><div class="legend-color a5"></div> A5: <span id="legendA5">۰</span></div>
+              <div class="legend-item"><div class="legend-color a3"></div> A3: <span id="legendA3">۰</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align: left; margin-top: 15px;">
+          <button class="btn btn-clear" type="button" style="font-size: 11px; padding: 6px 12px;" onclick="resetStats()">صفر کردن آمار</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary>⚙️ تنظیمات، بکاپ و پرینت رنگی</summary>
+      <div class="accordion-content">
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; background: #fef2f2; padding: 12px 16px; border-radius: 10px; border: 1px solid #fecaca; margin-bottom: 20px;">
+          <div>
+            <label style="font-weight: 800; font-size: 14px; color: #991b1b; display: block;">🖨️ فعال‌سازی پرینت رنگی</label>
+            <span style="font-size: 11px; color: #b91c1c;">با فعال کردن این گزینه، کارت‌های پرینت رنگی (A3، A4، A5) به بخش انتخاب کاغذ اضافه می‌شود.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="colorToggle" onchange="toggleColorPrint()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <div style="flex: 1 1 100%;">
+            <label>نام فروشگاه / مغازه</label>
+            <input type="text" id="storeName" placeholder="مثلاً: کپی و پرینت ونوس">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>شماره تماس فروشگاه</label>
+            <input type="text" id="storePhone" placeholder="مثلاً: 021-12345678">
+          </div>
+          <div>
+            <label>آدرس فروشگاه</label>
+            <input type="text" id="storeAddress" placeholder="مثلاً: تهران، خیابان ولیعصر...">
+          </div>
+        </div>
+        <div class="logo-upload-box">
+          <div class="logo-preview" id="logoPreview">بدون لوگو</div>
+          <label class="custom-file-upload">
+            🖼️ انتخاب لوگو
+            <input type="file" id="logoInput" accept="image/*">
+          </label>
+        </div>
+        
+        <hr style="border: none; border-top: 1px dashed var(--border); margin: 20px 0;">
+        
+        <label style="font-weight: 700; font-size: 14px; display: block; margin-bottom: 10px;">💾 بکاپ‌گیری و بازیابی داده‌ها</label>
+        <p style="font-size: 11px; color: var(--muted); margin-bottom: 10px;">قبل از هر به‌روزرسانی، حتماً از اطلاعات خود بکاپ بگیرید.</p>
+        <button class="btn btn-backup" type="button" onclick="downloadBackup()">📥 دریافت فایل بکاپ</button>
+        <div style="margin-top: 10px;">
+          <input type="file" id="restoreFile" accept=".json" style="display: none;" onchange="restoreBackup(event)">
+          <button class="btn btn-restore" type="button" onclick="document.getElementById('restoreFile').click()">📤 بازیابی از فایل</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary>💰 تنظیم قیمت هر برگ (تومان)</summary>
+      <div class="accordion-content">
+        <div class="price-row">
+          <div><label>A4 یک‌رو</label><input type="number" id="p_a4_single" value="1000" min="0"></div>
+          <div><label>A4 دورو</label><input type="number" id="p_a4_double" value="1500" min="0"></div>
+          <div><label>A5 یک‌رو</label><input type="number" id="p_a5_single" value="700" min="0"></div>
+          <div><label>A5 دورو</label><input type="number" id="p_a5_double" value="1000" min="0"></div>
+          <div><label>A3 یک‌رو</label><input type="number" id="p_a3_single" value="2000" min="0"></div>
+          <div><label>A3 دورو</label><input type="number" id="p_a3_double" value="3000" min="0"></div>
+          <div><label>اسکن و کپی</label><input type="number" id="p_scan" value="500" min="0"></div>
+          
+          <div><label style="color:#dc2626;">A4 رنگی</label><input type="number" id="p_a4_color" value="3000" min="0"></div>
+          <div><label style="color:#dc2626;">A5 رنگی</label><input type="number" id="p_a5_color" value="2000" min="0"></div>
+          <div><label style="color:#dc2626;">A3 رنگی</label><input type="number" id="p_a3_color" value="5000" min="0"></div>
+        </div>
+      </div>
+    </details>
+
+    <div id="invoice"></div>
+  </div>
+
+  <div id="section-links" class="section">
+    <h1>🌐 سایت‌های مورد نیاز</h1>
+    <div class="links-dashboard" id="linksContainer"></div>
+  </div>
+
+  <div id="section-github" class="section">
+    <h1>🚀 راهنمای استقرار رایگان در GitHub Pages</h1>
+    <div class="panel">
+      <h2>📦 ساختار کامل فایل‌های آماده شده در پکیج ZIP</h2>
+      <p style="font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 16px;">
+        تمامی فایل‌های مورد نیاز برای تبدیل برنامه به وب‌اپ قابل نصب (PWA) شامل <span class="code-pill">index.html</span>، <span class="code-pill">manifest.json</span>، <span class="code-pill">sw.js</span>، <span class="code-pill">font.ttf</span>، آیکون‌های استاندارد <span class="code-pill">icons/icon-192.png</span> و <span class="code-pill">icons/icon-512.png</span> و تمامی ۱۸ آیکون پوشه <span class="code-pill">logo/</span> در فایل فشرده پروژه قرار داده شده‌اند.
+      </p>
+
+      <div class="guide-step">
+        <h3>گام اول: ساخت مخزن (Repository) در گیت‌هاب</h3>
+        <p>وارد سایت <strong>github.com</strong> شوید، از بالای صفحه روی علامت <strong>+</strong> کلیک کرده و گزینه <strong>New repository</strong> را بزنید. نام مخزن را مثلاً <span class="code-pill">printol</span> بگذارید، وضعیت آن را روی <strong>Public</strong> قرار دهید و روی <strong>Create repository</strong> کلیک کنید.</p>
+      </div>
+
+      <div class="guide-step">
+        <h3>گام دوم: آپلود فایل‌های داخل پکیج ZIP</h3>
+        <p>فایل ZIP پروژه را از حالت فشرده خارج (Extract) کنید. در صفحه مخزن گیت‌هاب روی لینک <strong>uploading an existing file</strong> کلیک کنید، تمام فایل‌ها و پوشه‌های داخل پکیج (<span class="code-pill">index.html</span>، <span class="code-pill">manifest.json</span>، <span class="code-pill">sw.js</span>، <span class="code-pill">font.ttf</span>، <span class="code-pill">icons</span> و <span class="code-pill">logo</span>) را با هم بکشید و رها کنید (Drag & Drop) و در پایین صفحه دکمه سبز <strong>Commit changes</strong> را بزنید.</p>
+      </div>
+
+      <div class="guide-step">
+        <h3>گام سوم: فعال‌سازی GitHub Pages (لینک HTTPS)</h3>
+        <p>در بالای صفحه مخزن وارد تب <strong>Settings</strong> شوید و از منوی سمت چپ گزینه <strong>Pages</strong> را انتخاب کنید. در بخش <strong>Branch</strong> گزینه <strong>None</strong> را به <strong>main</strong> تغییر دهید، پوشه را روی <span class="code-pill">/ (root)</span> بگذارید و روی <strong>Save</strong> کلیک کنید.</p>
+      </div>
+
+      <div class="guide-step">
+        <h3>گام چهارم: نصب برنامه روی دسکتاپ و موبایل</h3>
+        <p>پس از حدود ۱ دقیقه صفحه را رفرش کنید تا آدرس آنلاین شما (به شکل <span class="code-pill">https://username.github.io/printol/</span>) نمایش داده شود. با باز کردن این لینک در مرورگر Chrome یا Edge، بنر <strong>«نصب پرینتول روی دستگاه»</strong> ظاهر می‌شود و برنامه مستقیماً در منوی Start ویندوز یا صفحه اصلی موبایل نصب خواهد شد.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    نسخه <span>2.6</span> | ساخته شده توسط <span>ALICODE</span> با یک فنجان قهوه ☕
+  </div>
+</div>
+
+<script>
+  // ==========================================
+  // ابزارهای کمکی ذخیره‌سازی امن و اعلان (Toast / Modal)
+  // ==========================================
+  function safeGetItem(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function safeSetItem(key, val) {
+    try { localStorage.setItem(key, val); } catch (e) {}
+  }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    const box = document.getElementById('toastBox');
+    if (!box) return;
+    box.textContent = msg;
+    box.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => box.classList.remove('show'), 3200);
+  }
+
+  let confirmCallback = null;
+  function openConfirm(msg, onYes) {
+    const modal = document.getElementById('confirmModal');
+    const msgEl = document.getElementById('confirmMessage');
+    msgEl.textContent = msg;
+    confirmCallback = onYes;
+    modal.classList.add('show');
+  }
+
+  document.getElementById('confirmYesBtn').addEventListener('click', () => {
+    document.getElementById('confirmModal').classList.remove('show');
+    if (typeof confirmCallback === 'function') confirmCallback();
+    confirmCallback = null;
+  });
+  document.getElementById('confirmNoBtn').addEventListener('click', () => {
+    document.getElementById('confirmModal').classList.remove('show');
+    confirmCallback = null;
+  });
+
+  // ==========================================
+  // PWA - ثبت Service Worker و مدیریت نصب
+  // ==========================================
+  let deferredPrompt;
+  const installBanner = document.getElementById('installBanner');
+  const installBtn = document.getElementById('installBtn');
+  const dismissBtn = document.getElementById('dismissBtn');
+
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Service Worker registered:', reg.scope))
+        .catch(err => console.log('Service Worker info:', err));
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const dismissed = safeGetItem('pwaDismissed');
+    if (!dismissed) {
+      setTimeout(() => {
+        installBanner.classList.add('show');
+      }, 2000);
+    }
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) {
+      showToast('برای نصب، از منوی مرورگر گزینه "Add to Home Screen" یا "Install App" را انتخاب کنید.');
+      return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('User response to the install prompt:', outcome);
+    deferredPrompt = null;
+    installBanner.classList.remove('show');
+  });
+
+  dismissBtn.addEventListener('click', () => {
+    installBanner.classList.remove('show');
+    safeSetItem('pwaDismissed', 'true');
+  });
+
+  window.addEventListener('appinstalled', () => {
+    showToast('✅ وب‌اپ پرینتول با موفقیت نصب شد!');
+    installBanner.classList.remove('show');
+    deferredPrompt = null;
+  });
+
+  // ==========================================
+  // مدیریت تبها
+  // ==========================================
+  function switchTab(tabName, btnEl) {
+    document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('section-' + tabName).classList.add('active');
+    btnEl.classList.add('active');
+  }
+
+  // ==========================================
+  // دادههای لینکها
+  // ==========================================
+  const DEFAULT_LINKS = {
+    "پیام رسان ها": {
+      icon: "logo/messengers.png",
+      links: [
+        { name: "ایتا (وب)", url: "https://web.eitaa.com/" },
+        { name: "روبیکا (وب)", url: "https://web.rubika.ir/" },
+        { name: "بله (وب)", url: "https://web.bale.ai/" },
+        { name: "شاد (وب)", url: "https://web.shad.ir/" },
+        { name: "سروش", url: "https://web.soroushplus.ir/" },
+        { name: "تلگرام", url: "https://web.telegram.org/" },
+        { name: "واتساپ", url: "https://web.whatsapp.com/" }
+      ]
+    },
+    "پنل اینترنت های ثابت": {
+      icon: "logo/isp.png",
+      links: [
+        { name: "شاتل", url: "https://my.shatel.ir/" },
+        { name: "آسیاتک", url: "https://ecare.asiatech.ir/" },
+        { name: "مخابرات", url: "https://adsl.tci.ir/" },
+        { name: "پارس آنلاین", url: "https://onebill.parsonline.com/" },
+        { name: "ایرانسل", url: "https://my.irancell.ir/" },
+        { name: "همراه اول", url: "https://my.mci.ir/" },
+        { name: "رایتل", url: "https://my.righttel.ir/" }
+      ]
+    },
+    "امور دانشگاهی": {
+      icon: "logo/university.png",
+      links: [
+        { name: "سازمان سنجش", url: "https://sanjesh.org/" },
+        { name: "سامانه سجاد", url: "https://portal.saorg.ir/" },
+        { name: "آموزشیار آزاد", url: "https://stdn.iau.ir/Student/Pages/acmstd/loginPage.jsp" },
+        { name: "گلستان پیام نور", url: "https://pnu.ac.ir/" },
+        { name: "همآوا", url: "https://uast.ac.ir/" },
+        { name: "صندوق رفاه", url: "https://bp.swf.ir/" }
+      ]
+    },
+    "امور دانش آموزی": {
+      icon: "logo/school.png",
+      links: [
+        { name: "مای مدیو", url: "https://my.medu.ir/" },
+        { name: "سامانه سیدا", url: "https://sida.medu.ir/" },
+        { name: "سامانه پادا", url: "https://pada.medu.ir/" },
+        { name: "کتاب درسی", url: "https://irtextbook.ir/" }
+      ]
+    },
+    "بانکی و ثبت چک": {
+      icon: "logo/bank.png",
+      links: [
+        { name: "بانک مرکزی", url: "https://cbi.ir/" },
+        { name: "صیاد ملی", url: "https://sayad.bmi.ir/" },
+        { name: "صیاد ملت", url: "https://ebank.bankmellat.ir/" },
+        { name: "ساد ۲۴", url: "https://sad24.ir/" },
+        { name: "شاپرک", url: "https://shaparak.ir/" },
+        { name: "بانک ملی", url: "https://www.bmi.ir/" }
+      ]
+    },
+    "خدمات خودرو": {
+      icon: "logo/car.png",
+      links: [
+        { name: "سامانه سخا", url: "https://sakha.epolice.ir/" },
+        { name: "نوبتدهی پلاک", url: "https://nobatdehi.epolice.ir/" },
+        { name: "ایرانخودرو", url: "https://ikcosales.ir/" },
+        { name: "سیمفا", url: "https://symfa.ir/" },
+        { name: "تهران من", url: "https://my.tehran.ir/" }
+      ]
+    },
+    "خدمات مالیاتی": {
+      icon: "logo/tax.png",
+      links: [
+        { name: "مایتکس", url: "https://my.tax.gov.ir/" },
+        { name: "سازمان مالیاتی", url: "https://tax.gov.ir/" },
+        { name: "سامانه مودیان", url: "https://tp.tax.gov.ir/" },
+        { name: "ارزش افزوده", url: "https://evat.ir/" }
+      ]
+    },
+    "دهک و یارانه": {
+      icon: "logo/subsidy.png",
+      links: [
+        { name: "سامانه حمایت", url: "https://hemayat.mcls.gov.ir/" },
+        { name: "سامانه سیمین", url: "https://simin.hadafmandi.ir/" },
+        { name: "ثبت احوال", url: "https://ncr.ir/" }
+      ]
+    },
+    "خدمات قضایی": {
+      icon: "logo/judiciary.png",
+      links: [
+        { name: "عدلایران", url: "https://adliran.ir/" },
+        { name: "ابلاغ الکترونیک", url: "https://eblagh.adliran.ir/" },
+        { name: "ثبت اسناد", url: "https://ssaa.ir/" }
+      ]
+    },
+    "مجوز و پروانه": {
+      icon: "logo/license.png",
+      links: [
+        { name: "درگاه مجوزها", url: "https://mojavez.ir/" },
+        { name: "نوین اصناف", url: "https://iranianasnaf.ir/" },
+        { name: "اینماد", url: "https://e-namad.ir/" }
+      ]
+    },
+    "خدمات پستی": {
+      icon: "logo/post.png",
+      links: [
+        { name: "رهگیری پست", url: "https://tracking.post.ir/" },
+        { name: "پرتال پست", url: "https://post.ir/" },
+        { name: "پستبار", url: "https://postbar.ir/" }
+      ]
+    },
+    "خدمات ورزشی": {
+      icon: "logo/sports.png",
+      links: [
+        { name: "بیمه ورزشی", url: "https://insurance.ifsm.ir/" },
+        { name: "وزارت ورزش", url: "https://msy.gov.ir/" },
+        { name: "ورزش سه", url: "https://varzesh3.com/" }
+      ]
+    },
+    "خدمات بازنشستگان": {
+      icon: "logo/pension.png",
+      links: [
+        { name: "بازنشستگی", url: "https://cspf.ir/" },
+        { name: "ساتا", url: "https://saba.esata.ir/" },
+        { name: "تامین اجتماعی", url: "https://e-services.tamin.ir/" }
+      ]
+    },
+    "خدمات بیمه": {
+      icon: "logo/insurance.png",
+      links: [
+        { name: "تامین اجتماعی", url: "https://tamin.ir/" },
+        { name: "بیمه سلامت", url: "https://bimehsalamat.ir/" },
+        { name: "بیمه مرکزی", url: "https://centinsur.ir/" }
+      ]
+    },
+    "سامانه های دولتی": {
+      icon: "logo/government.png",
+      links: [
+        { name: "دولت هوشمند", url: "https://my.gov.ir/" },
+        { name: "کارت ملی", url: "https://ncr.ir/" },
+        { name: "پلیس +۱۰", url: "https://epolice.ir/" },
+        { name: "نظام وظیفه", url: "https://vazifeh.police.ir/" }
+      ]
+    },
+    "ابزارهای کاربردی": {
+      icon: "logo/tools.png",
+      links: [
+        { name: "iLovePDF", url: "https://www.ilovepdf.com/" },
+        { name: "TinyPNG", url: "https://tinypng.com/" },
+        { name: "Remove.bg", url: "https://www.remove.bg/" },
+        { name: "Photopea", url: "https://www.photopea.com/" },
+        { name: "Speedtest", url: "https://speedtest.net/" }
+      ]
+    }
+  };
+
+  let LINKS_DATA = DEFAULT_LINKS;
+  try {
+    const savedLinks = safeGetItem('siteLinksData');
+    if (savedLinks) LINKS_DATA = JSON.parse(savedLinks);
+  } catch (e) {}
+
+  function svgPaperBase(w, h, color, isDouble) {
+    const back = isDouble ? `<rect x="${-6}" y="${-6}" width="${w}" height="${h}" rx="4" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>` : '';
+    const lines = `<line x1="10" y1="20" x2="${w-10}" y2="20" stroke="${color}" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="10" y1="28" x2="${w-10}" y2="28" stroke="${color}" stroke-width="2" stroke-linecap="round" opacity="0.4"/><line x1="10" y1="36" x2="${w-25}" y2="36" stroke="${color}" stroke-width="2" stroke-linecap="round" opacity="0.3"/>`;
+    return `<g>${back}<rect x="0" y="0" width="${w}" height="${h}" rx="4" fill="#fff" stroke="${color}" stroke-width="2"/><text x="${w/2}" y="${h-10}" text-anchor="middle" font-family="Vazirmatn, sans-serif" font-size="11" font-weight="700" fill="${color}"></text>${lines}${isDouble ? `<circle cx="${w-12}" cy="12" r="6" fill="${color}" opacity="0.15"/><path d="M${w-15} 12 l2 2 l4 -4" stroke="${color}" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` : ''}</g>`;
+  }
+  function svgA4(isDouble) { return `<svg viewBox="-10 -10 74 94" xmlns="http://www.w3.org/2000/svg">${svgPaperBase(54, 74, '#2563eb', isDouble).replace('fill="#2563eb"></text>', 'fill="#2563eb">A4</text>')}</svg>`; }
+  function svgA5(isDouble) { return `<svg viewBox="-10 -10 64 84" xmlns="http://www.w3.org/2000/svg">${svgPaperBase(44, 64, '#16a34a', isDouble).replace('fill="#16a34a"></text>', 'fill="#16a34a">A5</text>')}</svg>`; }
+  function svgA3(isDouble) { return `<svg viewBox="-12 -12 90 110" xmlns="http://www.w3.org/2000/svg">${svgPaperBase(66, 88, '#d97706', isDouble).replace('fill="#d97706"></text>', 'fill="#d97706">A3</text>')}</svg>`; }
+  
+  function svgA4Color() { return `<svg viewBox="-10 -10 74 94" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="54" height="74" rx="4" fill="#fca5a5" stroke="#dc2626" stroke-width="2"/><text x="27" y="64" text-anchor="middle" font-family="Vazirmatn, sans-serif" font-size="11" font-weight="700" fill="#dc2626">A4</text><line x1="10" y1="20" x2="44" y2="20" stroke="#dc2626" stroke-width="2" opacity="0.5"/><line x1="10" y1="28" x2="44" y2="28" stroke="#dc2626" stroke-width="2" opacity="0.4"/><line x1="10" y1="36" x2="29" y2="36" stroke="#dc2626" stroke-width="2" opacity="0.3"/><circle cx="44" cy="10" r="6" fill="#dc2626" opacity="0.2"/><path d="M41 10 l2 2 l4 -4" stroke="#dc2626" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`; }
+  function svgA5Color() { return `<svg viewBox="-10 -10 64 84" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="44" height="64" rx="4" fill="#fca5a5" stroke="#dc2626" stroke-width="2"/><text x="22" y="54" text-anchor="middle" font-family="Vazirmatn, sans-serif" font-size="11" font-weight="700" fill="#dc2626">A5</text><line x1="10" y1="20" x2="34" y2="20" stroke="#dc2626" stroke-width="2" opacity="0.5"/><line x1="10" y1="28" x2="34" y2="28" stroke="#dc2626" stroke-width="2" opacity="0.4"/><line x1="10" y1="36" x2="19" y2="36" stroke="#dc2626" stroke-width="2" opacity="0.3"/><circle cx="34" cy="10" r="6" fill="#dc2626" opacity="0.2"/><path d="M31 10 l2 2 l4 -4" stroke="#dc2626" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`; }
+  function svgA3Color() { return `<svg viewBox="-12 -12 90 110" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="66" height="88" rx="4" fill="#fca5a5" stroke="#dc2626" stroke-width="2"/><text x="33" y="78" text-anchor="middle" font-family="Vazirmatn, sans-serif" font-size="11" font-weight="700" fill="#dc2626">A3</text><line x1="10" y1="20" x2="56" y2="20" stroke="#dc2626" stroke-width="2" opacity="0.5"/><line x1="10" y1="28" x2="56" y2="28" stroke="#dc2626" stroke-width="2" opacity="0.4"/><line x1="10" y1="36" x2="41" y2="36" stroke="#dc2626" stroke-width="2" opacity="0.3"/><circle cx="56" cy="10" r="6" fill="#dc2626" opacity="0.2"/><path d="M53 10 l2 2 l4 -4" stroke="#dc2626" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`; }
+
+  const PRODUCTS = {
+    a4_single: { name: 'A4 یکرو', subtitle: 'یک طرف چاپ', size: 'A4', svg: svgA4(false), category: 'a4' },
+    a4_double: { name: 'A4 دورو',  subtitle: 'دو طرف چاپ', size: 'A4', svg: svgA4(true), category: 'a4' },
+    a5_single: { name: 'A5 یکرو', subtitle: 'یک طرف چاپ', size: 'A5', svg: svgA5(false), category: 'a5' },
+    a5_double: { name: 'A5 دورو',  subtitle: 'دو طرف چاپ', size: 'A5', svg: svgA5(true), category: 'a5' },
+    a3_single: { name: 'A3 یکرو', subtitle: 'یک طرف چاپ', size: 'A3', svg: svgA3(false), category: 'a3' },
+    a3_double: { name: 'A3 دورو',  subtitle: 'دو طرف چاپ', size: 'A3', svg: svgA3(true), category: 'a3' },
+    scan: { name: 'اسکن و کپی', subtitle: 'خدمات اسکن', size: 'scan', svg: `<img src="logo/scan.png" class="custom-icon" alt="اسکن">`, category: 'services' },
+    a4_color: { name: 'A4 رنگی', subtitle: 'چاپ رنگی', size: 'A4', svg: svgA4Color(), category: 'color' },
+    a5_color: { name: 'A5 رنگی', subtitle: 'چاپ رنگی', size: 'A5', svg: svgA5Color(), category: 'color' },
+    a3_color: { name: 'A3 رنگی', subtitle: 'چاپ رنگی', size: 'A3', svg: svgA3Color(), category: 'color' }
+  };
+
+  let cart = {};
+
+  const logoInput = document.getElementById('logoInput');
+  const logoPreview = document.getElementById('logoPreview');
+  let currentLogoBase64 = '';
+  const savedLogo = safeGetItem('storeLogo');
+  if (savedLogo) {
+    currentLogoBase64 = savedLogo;
+    logoPreview.innerHTML = `<img src="${savedLogo}" alt="لوگو">`;
+  }
+  logoInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        currentLogoBase64 = event.target.result;
+        logoPreview.innerHTML = `<img src="${currentLogoBase64}" alt="لوگو">`;
+        safeSetItem('storeLogo', currentLogoBase64);
+        showToast('🖼️ لوگوی فروشگاه ذخیره شد.');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  let stats = { A4: 0, A5: 0, A3: 0, scan: 0, revenue: 0 };
+  try {
+    const savedStats = safeGetItem('paperStats');
+    if (savedStats) stats = JSON.parse(savedStats);
+  } catch (e) {}
+  if(stats.scan === undefined) stats.scan = 0;
+  if(stats.revenue === undefined) stats.revenue = 0;
+
+  function updateStatsUI() {
+    const total = stats.A4 + stats.A5 + stats.A3;
+    document.getElementById('statTotalPaper').textContent = total.toLocaleString('fa-IR');
+    document.getElementById('statTotalRevenue').textContent = stats.revenue.toLocaleString('fa-IR');
+    document.getElementById('legendA4').textContent = stats.A4.toLocaleString('fa-IR');
+    document.getElementById('legendA5').textContent = stats.A5.toLocaleString('fa-IR');
+    document.getElementById('legendA3').textContent = stats.A3.toLocaleString('fa-IR');
+
+    const chartEl = document.getElementById('paperChart');
+    if (total === 0) {
+      chartEl.style.setProperty('--pA4', '0%');
+      chartEl.style.setProperty('--pA5', '0%');
+    } else {
+      const pA4 = (stats.A4 / total) * 100;
+      const pA5 = pA4 + (stats.A5 / total) * 100;
+      chartEl.style.setProperty('--pA4', pA4 + '%');
+      chartEl.style.setProperty('--pA5', pA5 + '%');
+    }
+  }
+
+  function addToStats(currentTotalPrice) {
+    Object.keys(cart).forEach(key => {
+      const qty = cart[key];
+      const size = PRODUCTS[key].size;
+      if (stats[size] !== undefined) stats[size] += qty;
+    });
+    stats.revenue += currentTotalPrice;
+    safeSetItem('paperStats', JSON.stringify(stats));
+    updateStatsUI();
+  }
+
+  function resetStats() {
+    openConfirm('آیا مطمئن هستید که آمار کل کاغذ و درآمد صفر شود؟', () => {
+      stats = { A4: 0, A5: 0, A3: 0, scan: 0, revenue: 0 };
+      safeSetItem('paperStats', JSON.stringify(stats));
+      updateStatsUI();
+      showToast('📊 آمار کاغذ و درآمد صفر شد.');
+    });
+  }
+
+  function renderLinks() {
+    const container = document.getElementById('linksContainer');
+    container.innerHTML = '';
+    if (!LINKS_DATA || Object.keys(LINKS_DATA).length === 0) {
+      LINKS_DATA = DEFAULT_LINKS;
+      safeSetItem('siteLinksData', JSON.stringify(LINKS_DATA));
+    }
+    const borderColors = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#9333ea', '#0891b2', '#db2777', '#ea580c', '#4f46e5', '#be123c', '#15803d', '#0369a1', '#c026d3', '#65a30d'];
+    
+    Object.keys(LINKS_DATA).forEach((cat, index) => {
+      const data = LINKS_DATA[cat];
+      const catDiv = document.createElement('div');
+      catDiv.className = 'category-box';
+      catDiv.style.borderColor = borderColors[index % borderColors.length];
+      
+      let linksHtml = '';
+      if(data.links && Array.isArray(data.links)) {
+        data.links.forEach(link => {
+          linksHtml += `<a href="${link.url}" target="_blank" rel="noopener noreferrer" class="link-item">${link.name}</a>`;
+        });
+      }
+
+      catDiv.innerHTML = `
+        <div class="category-header">
+          <img src="${data.icon || 'logo/default.png'}" alt="${cat}" class="category-icon">
+          <h3>${cat}</h3>
+        </div>
+        <div class="links-grid-inner">
+          ${linksHtml}
+        </div>
+      `;
+      container.appendChild(catDiv);
+    });
+  }
+
+  function renderProducts() {
+    document.getElementById('grid-a4').innerHTML = '';
+    document.getElementById('grid-a5').innerHTML = '';
+    document.getElementById('grid-a3').innerHTML = '';
+    document.getElementById('grid-services').innerHTML = '';
+    document.getElementById('grid-color').innerHTML = '';
+
+    Object.entries(PRODUCTS).forEach(([key, p]) => {
+      const div = document.createElement('div');
+      div.className = 'product-card';
+      if (p.category === 'color') div.classList.add('color-card');
+      
+      div.innerHTML = `
+        <div class="add-hint">+</div>
+        ${p.svg}
+        <div class="title">${p.name}</div>
+        <div class="subtitle">${p.subtitle}</div>
+        <div class="price-tag" id="tag-${key}">—</div>
+      `;
+      div.onclick = () => addToCart(key);
+      
+      if (p.category === 'a4') document.getElementById('grid-a4').appendChild(div);
+      else if (p.category === 'a5') document.getElementById('grid-a5').appendChild(div);
+      else if (p.category === 'a3') document.getElementById('grid-a3').appendChild(div);
+      else if (p.category === 'services') document.getElementById('grid-services').appendChild(div);
+      else if (p.category === 'color') document.getElementById('grid-color').appendChild(div);
+    });
+    updatePriceTags();
+  }
+
+  function getUnitPrice(key) {
+    if (key === 'scan') {
+      return +(document.getElementById('p_scan')?.value || 500);
+    }
+    if (key === 'a4_color') return +(document.getElementById('p_a4_color')?.value || 3000);
+    if (key === 'a5_color') return +(document.getElementById('p_a5_color')?.value || 2000);
+    if (key === 'a3_color') return +(document.getElementById('p_a3_color')?.value || 5000);
+    
+    const el = document.getElementById('p_' + key);
+    return el ? (+el.value || 0) : 0;
+  }
+
+  function updatePriceTags() {
+    Object.keys(PRODUCTS).forEach(key => {
+      const tag = document.getElementById('tag-' + key);
+      if (tag) tag.textContent = getUnitPrice(key).toLocaleString('fa-IR') + ' ت';
+    });
+    renderCart();
+  }
+
+  function addToCart(key, qty = 1) {
+    cart[key] = (cart[key] || 0) + qty;
+    renderCart();
+  }
+  function changeQty(key, delta) {
+    cart[key] = (cart[key] || 0) + delta;
+    if (cart[key] <= 0) delete cart[key];
+    renderCart();
+  }
+  function removeFromCart(key) {
+    delete cart[key];
+    renderCart();
+  }
+
+  function renderCart() {
+    const cartEl = document.getElementById('cart');
+    const keys = Object.keys(cart);
+    if (keys.length === 0) {
+      cartEl.innerHTML = '<div class="empty-cart">هنوز چیزی اضافه نشده. روی آیکون کاغذها کلیک کن 👆</div>';
+      document.getElementById('totalAmount').textContent = '۰ تومان';
+      return;
+    }
+    let html = '';
+    let total = 0;
+    keys.forEach(key => {
+      const p = PRODUCTS[key];
+      const qty = cart[key];
+      const unit = getUnitPrice(key);
+      const lineTotal = unit * qty;
+      total += lineTotal;
+      html += `
+        <div class="cart-item">
+          <div class="thumb">${p.svg}</div>
+          <div class="info">
+            <div class="name">${p.name}</div>
+            <div class="unit">${unit.toLocaleString('fa-IR')} تومان × ${qty}</div>
+          </div>
+          <div class="qty-control">
+            <button type="button" onclick="changeQty('${key}', -1)">−</button>
+            <div class="qty">${qty}</div>
+            <button type="button" onclick="changeQty('${key}', 1)">+</button>
+          </div>
+          <div class="line-total">${lineTotal.toLocaleString('fa-IR')} ت</div>
+          <button type="button" class="btn-trash" onclick="removeFromCart('${key}')" title="حذف">🗑</button>
+        </div>
+      `;
+    });
+    cartEl.innerHTML = html;
+    document.getElementById('totalAmount').textContent = total.toLocaleString('fa-IR') + ' تومان';
+  }
+
+  function getCurrentCartTotal() {
+    let total = 0;
+    Object.keys(cart).forEach(key => {
+      total += (cart[key] * getUnitPrice(key));
+    });
+    return total;
+  }
+
+  function registerAndNext() {
+    if (Object.keys(cart).length === 0) {
+      showToast('⚠️ سبد خرید خالی است! حداقل یک کاغذ یا سرویس انتخاب کنید.');
+      return;
+    }
+    const cartTotal = getCurrentCartTotal();
+    addToStats(cartTotal);
+    
+    cart = {};
+    document.getElementById('customerName').value = '';
+    document.getElementById('customerPhone').value = '';
+    renderCart();
+    
+    const inv = document.getElementById('invoice');
+    inv.classList.remove('print-ready');
+    inv.style.display = 'none';
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('✅ سفارش ثبت شد و به آمار و درآمد اضافه گردید. آماده برای مشتری بعدی!');
+  }
+
+  function showInvoice() {
+    const keys = Object.keys(cart);
+    if (keys.length === 0) {
+      showToast('⚠️ اول حداقل یک آیتم به فاکتور اضافه کنید!');
+      return;
+    }
+    const name = document.getElementById('customerName').value || '—';
+    const phone = document.getElementById('customerPhone').value || '—';
+    const sName = document.getElementById('storeName').value || 'چاپ و پرینت';
+    const sPhone = document.getElementById('storePhone').value || '';
+    const sAddress = document.getElementById('storeAddress').value || '';
+
+    let rows = '';
+    let total = 0;
+    keys.forEach((key, i) => {
+      const p = PRODUCTS[key];
+      const qty = cart[key];
+      const unit = getUnitPrice(key);
+      const lineTotal = unit * qty;
+      total += lineTotal;
+      rows += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${p.name}</td>
+          <td>${p.subtitle}</td>
+          <td>${qty}</td>
+          <td>${unit.toLocaleString('fa-IR')}</td>
+          <td>${lineTotal.toLocaleString('fa-IR')}</td>
+        </tr>`;
+    });
+
+    const now = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const faDate = new Intl.DateTimeFormat('fa-IR', options).format(now);
+    const faTime = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+
+    const inv = document.getElementById('invoice');
+    let logoHtml = currentLogoBase64 ? `<img src="${currentLogoBase64}" class="logo-img" alt="لوگو">` : '';
+    
+    inv.innerHTML = `
+      <div class="invoice-header">
+        ${logoHtml}
+        <div class="store-info">
+          <h4>${sName}</h4>
+          ${sPhone ? `<p>📞 ${sPhone}</p>` : ''}
+          ${sAddress ? `<p>📍 ${sAddress}</p>` : ''}
+        </div>
+      </div>
+      
+      <h3>فاکتور چاپ و پرینت</h3>
+      
+      <div class="invoice-meta">
+        <div>
+          <div><strong>نام مشتری:</strong> ${name}</div>
+          <div><strong>شماره تماس:</strong> ${phone}</div>
+        </div>
+        <div style="text-align: left;">
+          <div><strong>تاریخ:</strong> ${faDate}</div>
+          <div><strong>ساعت:</strong> ${faTime}</div>
+        </div>
+      </div>
+
+      <table class="invoice-table">
+        <thead>
+          <tr><th>#</th><th>نوع کاغذ</th><th>شرح</th><th>تعداد</th><th>قیمت واحد</th><th>جمع</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="invoice-total">جمع کل: ${total.toLocaleString('fa-IR')} تومان</div>
+      <div class="invoice-footer">با تشکر از سفارش شما 🌟 | نسخه 2.6</div>
+    `;
+    inv.classList.add('print-ready');
+    inv.style.display = 'block';
+    setTimeout(() => window.print(), 300);
+  }
+
+  function clearAll() {
+    openConfirm('سبد خرید و اطلاعات مشتری پاک شود؟ (آمار و درآمد باقی می‌ماند)', () => {
+      cart = {};
+      document.getElementById('customerName').value = '';
+      document.getElementById('customerPhone').value = '';
+      const inv = document.getElementById('invoice');
+      inv.classList.remove('print-ready');
+      inv.style.display = 'none';
+      renderCart();
+      showToast('🗑️ سبد فاکتور پاک شد.');
+    });
+  }
+
+  function downloadBackup() {
+    const data = {
+      storeName: document.getElementById('storeName').value,
+      storePhone: document.getElementById('storePhone').value,
+      storeAddress: document.getElementById('storeAddress').value,
+      logo: currentLogoBase64,
+      prices: {
+        a4_single: document.getElementById('p_a4_single').value,
+        a4_double: document.getElementById('p_a4_double').value,
+        a5_single: document.getElementById('p_a5_single').value,
+        a5_double: document.getElementById('p_a5_double').value,
+        a3_single: document.getElementById('p_a3_single').value,
+        a3_double: document.getElementById('p_a3_double').value,
+        scan: document.getElementById('p_scan').value,
+        a4_color: document.getElementById('p_a4_color').value,
+        a5_color: document.getElementById('p_a5_color').value,
+        a3_color: document.getElementById('p_a3_color').value
+      },
+      stats: stats,
+      colorEnabled: document.getElementById('colorToggle').checked,
+      version: "2.6"
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `printol_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('📥 فایل پشتیبان با موفقیت آماده دانلود شد.');
+  }
+
+  function restoreBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        
+        if (data.storeName !== undefined) document.getElementById('storeName').value = data.storeName;
+        if (data.storePhone !== undefined) document.getElementById('storePhone').value = data.storePhone;
+        if (data.storeAddress !== undefined) document.getElementById('storeAddress').value = data.storeAddress;
+        
+        if (data.logo) {
+          currentLogoBase64 = data.logo;
+          logoPreview.innerHTML = `<img src="${data.logo}" alt="لوگو">`;
+          safeSetItem('storeLogo', data.logo);
+        }
+        
+        if (data.prices) {
+          const ids = ['a4_single','a4_double','a5_single','a5_double','a3_single','a3_double','scan','a4_color','a5_color','a3_color'];
+          ids.forEach(id => {
+            if (data.prices[id] !== undefined) document.getElementById('p_' + id).value = data.prices[id];
+          });
+        }
+
+        if (data.stats) {
+          stats = data.stats;
+          if (stats.scan === undefined) stats.scan = 0;
+          if (stats.revenue === undefined) stats.revenue = 0;
+          safeSetItem('paperStats', JSON.stringify(stats));
+        }
+        
+        if (data.colorEnabled !== undefined) {
+          document.getElementById('colorToggle').checked = !!data.colorEnabled;
+          toggleColorPrint();
+        }
+
+        ['storeName', 'storePhone', 'storeAddress'].forEach(id => {
+          if (data[id] !== undefined) safeSetItem(id, data[id]);
+        });
+        if (data.prices) {
+          Object.keys(data.prices).forEach(key => {
+            safeSetItem('p_' + key, data.prices[key]);
+          });
+        }
+
+        updateStatsUI();
+        updatePriceTags();
+        showToast('✅ اطلاعات با موفقیت بازیابی شد!');
+        event.target.value = '';
+      } catch(err) {
+        showToast('❌ فایل بکاپ معتبر نیست!');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function toggleColorPrint() {
+    const isChecked = document.getElementById('colorToggle').checked;
+    const colorSection = document.getElementById('colorSection');
+    if (isChecked) {
+      colorSection.style.display = 'block';
+      safeSetItem('colorEnabled', 'true');
+    } else {
+      colorSection.style.display = 'none';
+      safeSetItem('colorEnabled', 'false');
+    }
+  }
+
+  const saveIds = [
+    'p_a4_single','p_a4_double','p_a5_single','p_a5_double','p_a3_single','p_a3_double','p_scan',
+    'p_a4_color','p_a5_color','p_a3_color',
+    'storeName','storePhone','storeAddress'
+  ];
+  saveIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const saved = safeGetItem(id);
+    if (saved !== null) el.value = saved;
+    el.addEventListener('input', () => {
+      safeSetItem(id, el.value);
+      if (id.startsWith('p_')) updatePriceTags();
+    });
+  });
+
+  renderProducts();
+  updateStatsUI();
+  renderLinks();
+  
+  if (safeGetItem('colorEnabled') === 'true') {
+    document.getElementById('colorToggle').checked = true;
+    document.getElementById('colorSection').style.display = 'block';
+  }
+</script>
+</body>
+</html>
